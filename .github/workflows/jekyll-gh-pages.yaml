@@ -20,8 +20,5 @@ jobs:
           pipenv install --dev --ignore-pipfile
       - name: Run app
         run: |
-          chmod +x st.sh
-          ./st.sh
-
-
-#
+          chmod +x docs/st.sh
+          ./docs/st.sh
