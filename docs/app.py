@@ -36,6 +36,7 @@ def transform():
 
     img = Image.open(file)
     img_array = np.array(img)
+    img_width, img_height = img.size
     normalized_array = img_array / 255.0
 
     x = np.linspace(-np.pi, np.pi, img_array.shape[1])
@@ -85,7 +86,7 @@ def transform():
 
     plot_base64 = base64.b64encode(plot_bytes).decode('utf-8')
 
-    return render_template('result.html', orig=orig_filename, plot=plot_base64, result_filename=result_filename)
+    return render_template('result.html', orig=orig_filename, plot=plot_base64, result_filename=result_filename, width=img_width, height=img_height)
 
 @app.route('/', methods=['GET'])
 def index():
