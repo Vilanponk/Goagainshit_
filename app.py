@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, abort, send_from_directory
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageEnhance
 import requests
 import os
 import base64
@@ -15,8 +15,7 @@ RECAPTCHA_SITE_KEY = '6LdlLBAmAAAAADEkPEp1BIl_lbDYwzeE_n6lkhBt'
 @app.route('/mywork', methods=['POST'])
 def transform():
     file = request.files.get('file')
-    function_type = request.form.get('function_type')
-    period = float(request.form.get('period'))
+    contrast = float(request.form.get('contrast'))
 
     if not file:
         abort(400, 'No file was uploaded')
@@ -35,28 +34,11 @@ def transform():
         abort(400, 'reCAPTCHA verification failed')
 
     img = Image.open(file)
-    img_array = np.array(img)
-    img_width, img_height = img.size
-    normalized_array = img_array / 255.0
-
-    x = np.linspace(-np.pi, np.pi, img_array.shape[1])
-    y = np.linspace(-np.pi, np.pi, img_array.shape[0])
-    X, Y = np.meshgrid(x, y)
-
-    if function_type == 'sin':
-        Z = np.sin(2 * np.pi * period * (X + Y))
-    elif function_type == 'cos':
-        Z = np.cos(2 * np.pi * period * (X + Y))
-    else:
-        abort(400, 'Invalid function type')
-
-    Z = np.expand_dims(Z, axis=2)
-    transformed_array = np.clip(normalized_array * (1 + Z), 0, 1)
-
-    transformed_img = Image.fromarray((transformed_array * 255).astype(np.uint8))
+    enhancer = ImageEnhance.Contrast(img)
+    contrast_img = enhancer.enhance(contrast)
 
     orig_colors = get_color_distribution(img)
-    transformed_colors = get_color_distribution(transformed_img)
+    contrast_colors = get_color_distribution(contrast_img)
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
     fig.suptitle('Color Distribution')
@@ -66,17 +48,16 @@ def transform():
     ax1.set_xticklabels([c[1] for c in orig_colors], rotation=45)
     ax1.set_title('Original Image')
 
-    ax2.plot(np.arange(len(transformed_colors)), [c[0] / 255 for c in transformed_colors],
-             color='red')  # set a single color
-    ax2.set_xticks(np.arange(len(transformed_colors)))
-    ax2.set_xticklabels([c[1] for c in transformed_colors], rotation=45)
-    ax2.set_title('Transformed Image')
+    ax2.plot(np.arange(len(contrast_colors)), [c[0] / 255 for c in contrast_colors], color='red')  # set a single color
+    ax2.set_xticks(np.arange(len(contrast_colors)))
+    ax2.set_xticklabels([c[1] for c in contrast_colors], rotation=45)
+    ax2.set_title('Contrast Image')
 
     plt.tight_layout()
     plot_filename = os.path.join(app.config['UPLOAD_FOLDER'], 'plot.png')
     plt.savefig(plot_filename)
-    transformed_filename = os.path.join(app.config['UPLOAD_FOLDER'], 'transformed.png')
-    transformed_img.save(transformed_filename)
+    contrast_filename = os.path.join(app.config['UPLOAD_FOLDER'], 'contrast.png')
+    contrast_img.save(contrast_filename)
     orig_filename = os.path.join(app.config['UPLOAD_FOLDER'], 'orig.png')
     img.save(orig_filename)
 
@@ -86,7 +67,7 @@ def transform():
 
     plot_base64 = base64.b64encode(plot_bytes).decode('utf-8')
 
-    return render_template('result.html', orig=orig_filename, plot=plot_base64, result_filename=result_filename, width=img_width, height=img_height)
+    return render_template('result.html', orig=orig_filename, plot=plot_base64, result_filename=result_filename, width=img.width, height=img.height)
 
 @app.route('/', methods=['GET'])
 def index():

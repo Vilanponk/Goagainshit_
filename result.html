@@ -1,25 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Result</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        img {
-            max-width: 100%;
-            height: auto;
-        }
-    </style>
+    <title>Image Enhancer - Results</title>
 </head>
 <body>
     <h1>Result</h1>
     <h2>Original Image: </h2>
     <p>Resolution: {{ width }} x {{ height }}</p>
     <img src="{{ url_for('uploaded_file', filename='orig.png') }}" alt="Original Image">
-    <h2>Transformed Image</h2>
-    <img src="{{ url_for('uploaded_file', filename='transformed.png') }}" alt="Transformed Image">
+    <h2>Contrast Image</h2>
+    <img src="{{ url_for('uploaded_file', filename='contrast.png') }}" alt="Contrast Image">
     <h2>Color Distribution</h2>
-    <img src="{{ url_for('uploaded_file', filename='plot.png') }}" alt="Color Distribution">
+    <img src="data:image/png;base64,{{ plot }}" alt="Color Distribution">
     <button onclick="history.back()">Go back</button>
 </body>
 </html>
